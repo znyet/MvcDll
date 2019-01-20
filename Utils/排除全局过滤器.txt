@@ -1,0 +1,80 @@
+https://blog.csdn.net/shenwb110/article/details/81119122
+https://www.cnblogs.com/wdcwy/p/6414186.html
+
+================================================================
+1，定义过滤器：
+
+public class LoginJsonFilter : ActionFilterAttribute
+    {
+        public bool IsCheck { get; set; }//
+        public override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            if(!IsCheck)
+            {
+                return;
+            }
+ 
+            User user = filterContext.RequestContext.HttpContext.Session["CurrentUser"] as User;
+ 
+            if (user == null)
+            {
+                if (IsAjax())
+                {
+                    Result<bool> result = new Result<bool>();
+                    result.Code = ResultCode.Failed;
+                    result.Message = "未登录或者登录已经过期,请重新登录";
+                    filterContext.Result = new JsonResult<Result<bool>>
+                    {
+                        Data = result,
+                        ContentType = null,
+                        ContentEncoding = null,
+                        JsonRequestBehavior = JsonRequestBehavior.AllowGet
+                    };
+                    return;
+                }
+                else
+                {
+                    filterContext.Result = new RedirectResult("/User/LoginView");
+                    return;
+                }
+            }
+            else
+            {
+                base.OnActionExecuting(filterContext);
+            }
+        }
+ 
+        #region 是否是Ajax请求 + static bool IsAjax()
+        /// <summary>
+        /// 是否是Ajax请求
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsAjax()
+        {
+            return HttpContext.Current.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+        }
+        #endregion
+    }
+2，在App_Start文件夹下添加FilterConfig类
+
+ public class FilterConfig
+    {
+        public static void RegisterGlobalFilters(GlobalFilterCollection filters)
+        {
+            filters.Add(new LoginJsonFilter(){ IsCheck = true});
+        }
+    }
+3，在Global.asax中注册全局过滤器
+
+ protected void Application_Start()
+        {
+            FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
+        }
+4，如果某Action中不想使用该过滤器，如登录页，则可以通过如下方式排除
+
+[LoginJsonFilter(IsCheck =false)]
+        public ActionResult LoginView()
+        {
+            return View();
+        }
+ 

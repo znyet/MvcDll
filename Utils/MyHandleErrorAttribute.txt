@@ -1,0 +1,27 @@
+1、类
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace WebApplication1.App_Start
+{
+    public class MyHandleErrorAttribute : HandleErrorAttribute
+    {
+        public override void OnException(ExceptionContext filterContext)
+        {
+            Exception ex = filterContext.Exception;  //获取异常  
+            //在此可以把异常记录到日志里  
+            //跳转到友好页面，避免把错误页显示给用户  
+            filterContext.HttpContext.Response.Redirect("/err.html");
+            base.OnException(filterContext);
+        }
+    }
+}
+
+2、全局配置
+GlobalFilters.Filters.Add(new MyHandleErrorAttribute());
+ 
+ 

@@ -1,0 +1,61 @@
+1、类
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+using System.Web.Mvc;
+
+namespace WebApplication1.App_Start
+{
+    public class MyFilterAttribute : ActionFilterAttribute
+    {
+        public override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            base.OnActionExecuting(filterContext);
+            filterContext.HttpContext.Response.Write("Action执行之前<br />");
+        }
+
+        public override void OnActionExecuted(ActionExecutedContext filterContext)
+        {
+            base.OnActionExecuted(filterContext);
+            filterContext.HttpContext.Response.Write("Action执行之后<br />");
+        }
+
+        public override void OnResultExecuting(ResultExecutingContext filterContext)
+        {
+            base.OnResultExecuting(filterContext);
+            filterContext.HttpContext.Response.Write("返回Result之前<br />");
+        }
+
+        public override void OnResultExecuted(ResultExecutedContext filterContext)
+        {
+            base.OnResultExecuted(filterContext);
+            filterContext.HttpContext.Response.Write("返回Result之后<br />");
+        }
+
+    }
+}
+
+
+
+2、使用
+[MyFilterAttribute]
+public string kk() 
+{
+	return "123456<br />";
+}
+
+
+3、输出
+
+Action执行之前
+Action执行之后
+返回Result之前
+123456
+返回Result之后
+
+4、Global全局添加
+
+GlobalFilters.Filters.Add(new MyFilterAttribute());

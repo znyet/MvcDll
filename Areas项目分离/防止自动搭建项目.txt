@@ -1,0 +1,2 @@
+保留packages.config文件
+清除它里面所有内容

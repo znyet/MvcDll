@@ -1,0 +1,20 @@
+//context.MapRoute( //这样就是网址的首页了
+//    "Admin0",
+//    "",
+//    new { area = "Admin", controller = "Home", action = "Index", id = UrlParameter.Optional },
+//    namespaces: new string[] { "MyWeb.Admin.Controllers" }
+//);
+
+context.MapRoute(
+	"Admin",
+	"Admin",
+	new { area = "Admin", controller = "Home", action = "Index", id = UrlParameter.Optional },
+	namespaces: new string[] { "MyWeb.Admin.Controllers" }
+);
+
+context.MapRoute(
+	"Admin_default",
+	"Admin/{controller}/{action}/{id}",
+	new { action = "Index", id = UrlParameter.Optional },
+	namespaces: new string[] { "MyWeb.Admin.Controllers" }
+);

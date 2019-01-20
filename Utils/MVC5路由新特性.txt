@@ -1,0 +1,84 @@
+http://blog.csdn.net/qinkeliangqin/article/details/27084639
+
+1、App_Start文件夹底下RouteConfig.cs
+
+routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
+
+routes.MapMvcAttributeRoutes();  //注册属性路由
+
+routes.MapRoute(
+	name: "Default",
+	url: "{controller}/{action}/{id}",
+	defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional },
+	namespaces: new string[] { "TestMVC5.Controllers" }
+);
+
+2、回到控制器，在每个控制器头部加属性路由注释
+
+[Route("Home/People/{name}")] //name默认必填
+public ActionResult People()
+{
+}
+
+[Route("Home/People/{name?}")] //name?默认可不填
+
+[Route("Home/People/{name=1}")] //name默认不填则为1
+
+[Route("Home/People/{name:int}")] //路由约束，name只能为int类型
+
+
+-----------------------------------------------------------
+
+[RoutePrefix("Home")]  //统一默认前缀
+[Route("{action}")]   //默认路由
+public class HomeController : Controller
+{
+}
+
+ [Route("~/spotlight-review")] //取消路由前缀，改成自定义
+
+========================================================================
+对于区域Area的路由配置
+
+一、方式1
+
+1、首先删除Area下的AreaRegistration 类 ---这个很重要，一定要删除
+
+2、回到控制器
+
+[RouteArea("Admin")]  //标注区域
+[RoutePrefix("Home")]  //表述前缀
+[Route("{action}")]   //默认路由
+public class HomeController : Controller
+{
+	// GET: Admin/Home
+	public ActionResult Index()
+	{
+		return View();
+	}
+
+	[Route("People/{name=1}")]
+	public ActionResult People()
+	{
+		return View();
+	}
+}
+
+二、方式二
+把Global.asax文件下面的删除。
+AreaRegistration.RegisterAllAreas();
+
+然后注册到App_Start文件夹底下RouteConfig.cs
+
+routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
+
+routes.MapMvcAttributeRoutes();  //注册属性路由
+
+AreaRegistration.RegisterAllAreas(); //注意注册在这边即可实现
+
+routes.MapRoute(
+	name: "Default",
+	url: "{controller}/{action}/{id}",
+	defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional },
+	namespaces: new string[] { "TestMVC5.Controllers" }
+);
