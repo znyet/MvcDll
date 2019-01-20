@@ -1,0 +1,17 @@
+<configuration>
+  <connectionStrings>
+    <add name="mysqlConnection" connectionString="Data Source=27.154.233.6;Port=6033;userid=root;password=123456;database=usm_cert_auth;charset=utf8;convert zero datetime=True;" providerName="MySql.Data.MySqlClient" />
+  </connectionStrings>
+  <system.web>
+    <compilation debug="true" targetFramework="4.5" />
+    <httpRuntime targetFramework="4.5" />
+  </system.web>
+  <runtime>
+    <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+      <dependentAssembly>
+        <assemblyIdentity name="Newtonsoft.Json" publicKeyToken="30ad4fe6b2a6aeed"/>
+        <bindingRedirect oldVersion="0.0.0.0-8.0.0.0" newVersion="9.0.0.0"/>
+      </dependentAssembly>
+    </assemblyBinding>
+  </runtime>
+</configuration>

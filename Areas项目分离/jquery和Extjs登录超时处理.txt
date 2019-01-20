@@ -1,0 +1,77 @@
+后端
+//Admin权限
+public class AdminAuths : ActionFilterAttribute
+{
+    public override void OnActionExecuting(ActionExecutingContext filterContext)
+    {
+        HttpRequestBase request = filterContext.HttpContext.Request;
+        if (HttpContext.Current.Session["Admin"] == null)
+        {
+            if (request.IsAjaxRequest())
+            {
+                HttpContext.Current.Response.ContentType = "text/html";
+                HttpContext.Current.Response.AddHeader("sessionstatus", "timeout");
+                filterContext.Result = new EmptyResult();
+            }
+            else
+                filterContext.Result = new RedirectResult("/Admin/Login/TimeOut");
+        }
+        base.OnActionExecuting(filterContext);
+
+    }
+}
+
+=====================================================================================================
+
+前端
+
+
+
+----------------------------jquery
+$.ajaxSetup({     
+    contentType:"application/x-www-form-urlencoded;charset=utf-8",     
+    complete:function(XMLHttpRequest,textStatus){  
+        // 通过XMLHttpRequest取得响应头，sessionstatus，  
+        var sessionstatus=XMLHttpRequest.getResponseHeader("sessionstatus");  
+        if(sessionstatus=="timeout"){     
+            window.location.replace(webPath+"/common/toIndex.html");     
+        }  
+    }  
+});  
+
+
+---------------------------ExtJS
+
+
+//页面加载完毕开始初始化界面
+Ext.onReady(function () {
+    Ext.Ajax.timeout = 90000;  //90秒
+    hideMask();
+    Ext.QuickTips.init();
+
+   //------------------------------------这句是关键
+
+    Ext.Ajax.on('requestcomplete', checkUserSessionStatus, this);
+    function checkUserSessionStatus(conn, response, options) {
+        var sessionStatus = response.getResponseHeader("sessionstatus");
+        if (typeof (sessionStatus) != "undefined") {
+            Ext.Msg.alert('提示', '会话超时，请重新登录!', function (btn, text) {
+                if (btn == 'ok') {
+                    var redirect = 'login.aspx';
+                    window.location = redirect;
+                }
+            });
+        }
+    };  
+
+
+
+    ExtCreateMask();
+    Ext.create("AppClient.view.MyViewport");
+
+    var tabpanel_clientCenter = Ext.getCmp("tabpanel_clientCenter");
+    AddTabPanelToClient3("AppClient", tabpanel_clientCenter, "xgly_jbxxView", "xgly_jbxxController", "xgly_jbxx", "基本信息", "information", true);
+});
+
+
+

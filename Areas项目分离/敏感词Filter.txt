@@ -1,0 +1,87 @@
+https://www.cnblogs.com/ldp615/archive/2010/07/29/SensitiveWordsFilterAttribute.html
+
+ASP.NET Filters：ASP.NET MVC 中加在 Controller 或 Action 上的一种 Attribute。 通过它，MVC 网站在处理用户请求时，可以处理一些附加的操作，如：用户权限验证、系统日志、异常处理、缓存等。使用Filters可以使用简洁、强大的方式实现 AOP，Filter 中定义的行为可以在网站中多处简单方便的复用。
+
+ASP.NET MVC 中包含以下四种Filter:
+
+Authorization filter
+Action filter
+Result filter
+Exception filter
+本文只使用Action filter。
+
+Action filter:
+创建 Action filter 必须实现 IActionFilter 接口，它定义了两个方法：
+
+方法名	调用时机	可进行的操作
+OnActionExecuting	Action方法执行之前	可以给 filterContext.Result 赋值，以阻止 Action 的执行
+可以通过 filterContext.ActionParameters 查看或修改 Action 的参数
+OnActionExecuted	Action方法执行之后	可以通过 filterContext.Exception 获取 Action 执行时抛出的异常，并能把它标记为“已处理”：filterContext.ExceptionHandled = true。
+可以查看通过filterContext.Result查看 Action 的执行结果，但是不能修改。
+下面就使用 OnActionExecuting 可以在 Action 方法执行前 能查看并修改参数值的特性 来完成敏感信息的过滤功能。
+
+过滤敏感信息
+过滤敏感信息对一个网站来说非常重要，没有一个站长愿意看到自己网站因为一些敏感信息而被封。
+
+然而过滤敏感信息也不是一件容易事：
+
+需要一个好的过滤算法：简单的字符替换容易误伤，大多算法要用到正则表达式，档次高的还会用的语义分析；
+需要对很多地方过滤：网站大了，接收用户输入的地方很多，每个地方都要进行围堵。
+本仍不介绍过滤算法，只解决第二个问题。
+
+使用 Filters 附加过滤敏感信息功能
+创建SensitiveWordsFilterAttribute：
+新建一个类SensitiveWordsFilterAttribute，从ActionFilterAttribute继承，重写OnActionExecuting方法： 
+
+复制代码
+    public class SensitiveWordsFilterAttribute: ActionFilterAttribute
+    {
+        public override void OnActionExecuting(ActionExecutingContext filterContext)
+        {
+            var parameters = filterContext.ActionDescriptor.GetParameters();
+            foreach (var parameter in parameters)
+            {
+                if (parameter.ParameterType == typeof(string))
+                {
+                    //获取字符串参数原值
+                    var orginalValue = filterContext.ActionParameters[parameter.ParameterName] as string;
+                    //使用过滤算法处理字符串
+                    var filteredValue = SensitiveWordsFilter.Instance.Filter(orginalValue);
+                    //将处理后值赋给参数
+                    filterContext.ActionParameters[parameter.ParameterName] = filteredValue;
+                }
+            }
+        }
+    }
+复制代码
+上面的例子中，我们通过 filterContext.ActionDescriptor.GetParameters() 方法能获取到所有参数的详细信息。
+
+通过 filterContext.ActionParameters 可以获取和设置参数的值。
+
+附加过滤功能：
+我们只需要将SensitiveWordsFilterAttribute标在 Controller 或 Action 上：
+
+    [SensitiveWordsFilter]
+    public class ArticlesController : Controller
+    {
+        //...
+    }
+过滤好比抗洪，要全面围堵，遗漏任何一个地方，都将是灾难性的。如果懒的去一一查找要进行过滤的 Action，不如对所有的 Controller 都进行处理（有点"宁错杀,勿放过"的感觉），可采用以下方法之一：
+
+每个 Controller 逐一添加SensitiveWordsFilterAttribute；
+让所有 Controller 都从一个 Controller 基类继承，只需要给这个 Controller 基类加上SensitiveWordsFilterAttribute；
+如果你开始尝鲜使用 ASP.NET MVC 3，那就更简单了，只需要在 Global.asax 文件中处理：     
+复制代码
+    protected void Application_Start()
+    {
+         //...
+         RegisterGlobalFilters(GlobalFilters.Filters);
+    }
+    protected void RegisterGlobalFilters(GlobalFilterCollection filters)
+    {
+        filters.Add(new SensitiveWordsFilterAttribute());
+    }   
+复制代码
+    
+补充说明
+实际情况要复杂的多，比如需要将过滤情况反馈给用户，提示哪儿出了问题，高度显示敏感词等。这些都可以通过 Filter 简单实现。

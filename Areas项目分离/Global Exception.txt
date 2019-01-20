@@ -1,0 +1,212 @@
+http://www.cnblogs.com/zhangweidong/p/5168796.html
+
+-----------------------------------------------------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace XiaoBuPark.Entitys
+{
+    /// <summary>
+    /// log错误日志类(Web用)
+    /// </summary>
+    public class LogWebErrorEntity
+    {
+        public string _id { get; set; }
+
+        /// <summary>
+        /// 请求网页地址
+        /// </summary>
+        public string FilePath { get; set; }
+
+        /// <summary>
+        /// 请求网页地址包括queryString
+        /// </summary>
+        public string RawUrl { get; set; }
+
+        /// <summary>
+        /// http请求方式 Get  Post
+        /// </summary>
+        public string HttpMethod { get; set; }
+
+        public int HttpCode { get; set; }
+
+        /// <summary>
+        /// 添加时间
+        /// </summary>
+        public DateTime AddTime { get; set; }
+
+        /// <summary>
+        /// url请求参数
+        /// </summary>
+        public string QueryString { get; set; }
+
+        /// <summary>
+        /// post参数
+        /// </summary>
+        public string PostData { get; set; }
+
+        /// <summary>
+        /// 上传文件参数
+        /// </summary>
+        public string PostFiles { get; set; }
+
+        /// <summary>
+        /// 错误信息
+        /// </summary>
+        public string Message { get; set; }
+
+        public string PhysicalPath { get; set; }
+
+        /// <summary>
+        /// 源错误
+        /// </summary>
+        public string SourceError { get; set; }
+
+        public string TargetSite { get; set; }
+
+        /// <summary>
+        /// 堆栈信息
+        /// </summary>
+        public string StackTrace { get; set; }
+
+        /// <summary>
+        /// 用户浏览器信息
+        /// </summary>
+        public string UserAgent { get; set; }
+    }
+}
+
+
+-----------------------------------------------------------------------
+
+using MongoDB.Bson;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Web;
+using System.Web.Mvc;
+using System.Web.Routing;
+using XiaoBuPark.Entitys;
+using XiaoBuPark.Service;
+
+namespace XiaoBuPark.Web
+{
+    public class MvcApplication : System.Web.HttpApplication
+    {
+        //程序启动
+        protected void Application_Start()
+        {
+            var model = new LogInfoEntity()
+            {
+                _id = ObjectId.GenerateNewId().ToString(),
+                Title = "程序",
+                Message = "程序启动",
+                AddTime = DateTime.Now
+            };
+            LogService.LogInfo(model);
+
+            AreaRegistration.RegisterAllAreas();
+            RouteConfig.RegisterRoutes(RouteTable.Routes);
+        }
+
+        //程序错误
+        protected void Application_Error(object sender, EventArgs e)
+        {
+            Exception ex = HttpContext.Current.Server.GetLastError(); //实际出现的异常
+            if (ex != null)
+            {
+                Exception iex = ex.InnerException; //实际发生的异常
+                if (iex != null)
+                {
+                    ex = iex;
+                }
+                HttpException httpError = ex as HttpException; //http异常
+                int httpCode = 500;
+                //ASP.NET的400与404错误不记录日志，并都以自定义404页面响应
+                if (httpError != null)
+                {
+                    httpCode = httpError.GetHttpCode();
+                    if (httpCode == 400 || httpCode == 404)
+                    {
+                        HttpContext.Current.Response.StatusCode = 404;//在IIS中配置自定义404页面
+                        //Server.ClearError();
+                        return;
+                    }
+                }
+
+                //对于路径错误不记录日志，并都以自定义404页面响应
+                if (ex.TargetSite.ReflectedType == typeof(System.IO.Path))
+                {
+                    HttpContext.Current.Response.StatusCode = 404;
+                    //Server.ClearError();
+                    return;
+                }
+
+                LogWebErrorEntity model = new LogWebErrorEntity();
+                model._id = ObjectId.GenerateNewId().ToString();
+                model.FilePath = "" + HttpContext.Current.Request.FilePath;
+                model.RawUrl = HttpContext.Current.Request.RawUrl;
+                model.HttpMethod = HttpContext.Current.Request.HttpMethod;
+                model.HttpCode = httpCode;
+                model.AddTime = DateTime.Now;
+
+                var queryString = HttpContext.Current.Request.QueryString; //get参数
+                StringBuilder sbQueryString = new StringBuilder();
+                sbQueryString.Append(queryString.Count + "个：");
+                foreach (var key in queryString.AllKeys)
+                {
+                    sbQueryString.AppendFormat("{0}={1},", key, queryString[key]);
+                }
+                model.QueryString = sbQueryString.ToString();
+
+                var form = HttpContext.Current.Request.Form; //post参数
+                StringBuilder sbForm = new StringBuilder();
+                sbForm.Append(form.Count + "个：");
+                foreach (var key in form.AllKeys)
+                {
+                    sbForm.AppendFormat("{0}={1},", key, form[key]);
+                }
+                model.PostData = sbForm.ToString();
+
+                HttpFileCollection files = HttpContext.Current.Request.Files; //文件
+                StringBuilder sbFile = new StringBuilder();
+                sbFile.Append(files.Count + "个：");
+                if (files.Count != 0)
+                {
+                    for (int i = 0; i < files.Count; i++)
+                    {
+                        HttpPostedFile file = files[i];
+                        sbFile.AppendFormat("文件名：{0}|大小：{1},", file.FileName, file.ContentLength);
+                    }
+                }
+                model.PostFiles = sbFile.ToString();
+                model.Message = ex.Message;
+                model.SourceError = ex.Source;
+                model.StackTrace = ex.StackTrace;
+                model.PhysicalPath = HttpContext.Current.Request.PhysicalPath;
+                model.TargetSite = ex.TargetSite + "";
+                model.UserAgent = HttpContext.Current.Request.UserAgent;
+                LogService.LogWebError(model);
+
+            }
+        }
+
+        //程序停止
+        protected void Application_End(object sender, EventArgs e)
+        {
+            var model = new LogInfoEntity()
+            {
+                _id = ObjectId.GenerateNewId().ToString(),
+                Title = "程序",
+                Message = "程序停止",
+                AddTime = DateTime.Now
+            };
+            LogService.LogInfo(model);
+        }
+    }
+}

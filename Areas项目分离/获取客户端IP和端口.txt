@@ -1,0 +1,5 @@
+获取用户IP
+Request.ServerVariables["REMOTE_ADDR"]
+
+获取用户端口号
+Request.ServerVariables["REMOTE_PORT"]
