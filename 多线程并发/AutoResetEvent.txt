@@ -1,0 +1,16 @@
+//false 默认阻塞
+
+AutoResetEvent silm = new AutoResetEvent(false);
+
+slim.WaitOne(); //请求调用，允许多个调用Wait
+
+slim.Set(); //释放 ，一旦Set，只有第一个能执行，其它又阻塞
+
+//slim.Reset();//初始化状态，一般不调用这个 因为 Set之后就自动阻塞
+
+
+=======================================
+
+AutoResetEvent.WaitOne()每次只允许一个线程进入，当某个线程得到信号后，
+AutoResetEvent会自动又将信号置为不发送状态，
+则其他调用WaitOne的线程只有继续等待，也就是说AutoResetEvent一次只唤醒一个线程；

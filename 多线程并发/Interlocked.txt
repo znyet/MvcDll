@@ -1,0 +1,10 @@
+public static int total = 10;
+public static int start = 0;
+
+
+//int inc = Interlocked.Increment(ref start); //加一
+//int dec = Interlocked.Decrement(ref start); //减一
+//int add = Interlocked.Add(ref start, 100); //直接加上100
+//int ex = Interlocked.Exchange(ref start, 0); //重新设置start的值
+int compare = Interlocked.CompareExchange(ref start, total, total); //比较start和total是否相等，相等中间total替换start，无论如何都返回start
+Response.Write(compare);

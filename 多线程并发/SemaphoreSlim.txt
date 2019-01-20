@@ -1,0 +1,8 @@
+SemaphoreSlim slim = new SemaphoreSlim(100);
+bool ok = slim.Wait(TimeSpan.FromMilliseconds(500)); //0.5秒超时
+if (ok)
+{
+	//....进行逻辑操作
+
+	slim.Release();//操作完毕释放
+}

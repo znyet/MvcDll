@@ -1,0 +1,11 @@
+int total = 0;
+public static readonly object _lock = new object();
+
+if (total == 0)
+{
+	lock (_lock)
+	{
+		if (total == 0)
+			total = 1;
+	}
+}
