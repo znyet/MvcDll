@@ -1,0 +1,9 @@
+模板输出路径
+C:\Users\Administrator\Documents\Visual Studio 2013\My Exported Templates
+复制模板到下面
+C:\Users\Administrator\Documents\Visual Studio 2013\Templates\ProjectTemplates
+
+模板输出路径
+C:\Users\Administrator\Documents\Visual Studio 2017\My Exported Templates
+复制模板到下面
+C:\Users\Administrator\Documents\Visual Studio 2017\Templates\ProjectTemplates
