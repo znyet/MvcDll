@@ -1,0 +1,82 @@
+[HttpGet]
+public string GetAllChargingData(int id, string name)
+{
+    return "ChargingData" + id;
+}
+
+
+
+[HttpGet]
+public string GetByModel([FromUri]TB_CHARGING oData)
+{
+     return "ChargingData" + oData.ID;
+}
+
+
+[HttpPost]
+public bool SaveData([FromBody]TB_CHARGING oData)
+{
+	return true;
+}
+
+
+[HttpPost]
+public object SaveData(dynamic obj)
+{
+	var strName = Convert.ToString(obj.NAME);
+	return strName;
+}
+
+======================================================
+var postdata = { ID: "1", NAME: "Jim", CREATETIME: "1988-09-11" };
+$.ajax({
+	type: "post",
+	url: "http://localhost:27221/api/Charging/SaveData",
+	contentType: 'application/json',
+	data: JSON.stringify(postdata),
+	success: function (data, status) {}
+});
+
+[HttpPost]
+public bool SaveData(TB_CHARGING lstCharging)
+{
+	return true;
+}
+
+=========================================================
+var arr = ["1", "2", "3", "4"];
+$.ajax({
+	type: "post",
+	url: "http://localhost:27221/api/Charging/SaveData",
+	contentType: 'application/json',
+	data: JSON.stringify(arr),
+	success: function (data, status) { }
+});
+	
+[HttpPost]
+public bool SaveData(string[] ids)
+{
+	return true;
+}
+
+===========================================================
+var arr = [
+	{ ID: "1", NAME: "Jim", CREATETIME: "1988-09-11" },
+	{ ID: "2", NAME: "Lilei", CREATETIME: "1990-12-11" },
+	{ ID: "3", NAME: "Lucy", CREATETIME: "1986-01-10" }
+];
+$.ajax({
+	type: "post",
+	url: "http://localhost:27221/api/Charging/SaveData",
+	contentType: 'application/json',
+	data: JSON.stringify(arr),
+	success: function (data, status) {}
+});
+
+[HttpPost]
+public bool SaveData(List<TB_CHARGING> lstCharging)
+{
+	return true;
+}
+
+=================================================================
