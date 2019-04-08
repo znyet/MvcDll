@@ -41,6 +41,11 @@ $.post(url + "/Home/PostString", { "": "你好" }, function (data) {
 	console.log(data);
 })
 
+//post一个也只能一个------>url带参数
+$.post(url + "/Home/PostStringAndParam?id=这个id&name=这是2", { "": "你好" }, function (data) {
+	console.log(data);
+})
+
 ==============================================================================
 
 namespace TestWebApi.Controllers
@@ -103,6 +108,18 @@ namespace TestWebApi.Controllers
             };
             return result;
         }
+		
+		[HttpPost]
+        public HttpResponseMessage PostStringAndParam([FromBody]string data, string id, string name)
+        {
+            var jsonStr = "{\"IsSuccess\":true,\"Data\":\"www.itdos.com\"}";
+            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(jsonStr + data + id + name, Encoding.UTF8, "text/plain")
+            };
+            return result;
+        }
+		
     }
 
 
