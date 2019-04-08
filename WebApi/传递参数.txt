@@ -1,261 +1,118 @@
-https://www.cnblogs.com/zhangxiaolei521/p/5803841.html
+var url = "http://localhost:8123";
 
-一、Get方式
+var data = { name: "你好", sex: 2, id: "-晕了-" };
 
-1、无参
+var data2 = JSON.stringify(data);
 
-//Get没有参数  
-var get_f1 = function() {  
-    $.ajax({  
-        type: "get",  
-        url: "/api/Demo",  
-        success: function(data, status) {  
-            if (status == "success") {  
-                $("#div_test").html(data);  
-            }  
-        }  
-    });  
-}  
+//get传递多个
+$.get(url + "/Home/GetByParam", data, function (ddd) {
+	console.log(ddd);
+})
 
-----------------------------------------------------------------------
+//get传递实体
+$.get(url + "/Home/GetByModel", data, function (ddd) {
+	console.log(ddd);
+})
 
-2、一个参数
+//post实体
+$.ajax({
+	url: url + "/Home/PostModel",
+	type: "post",
+	data: data2,
+	contentType: "application/json",
+	success: function (data) {
+		console.log(data);
+	}
+})
 
-//Get一个参数  
-var get_f2 = function() {  
-    $.ajax({  
-        type: "get",  
-        url: "/api/Demo",  
-        data: { strQuery: JSON.stringify({ Id: "1", Name: "Jim", CreateTime: "1988-09-11" }) },  
-        contentType: "application/json",  
-        success: function(data, status) {  
-            if (status == "success") {  
-                $("#div_test").html(data);  
-            }  
-        }  
-    });  
-}  
+//post动态对象dynamic
+$.ajax({
+	url: url + "/Home/PostDynamic",
+	type: "post",
+	data: data2,
+	contentType: "application/json",
+	success: function (data) {
+		console.log(data);
+	}
+})
 
-后台控制器方法
+//post一个也只能一个
+$.post(url + "/Home/PostString", { "": "你好" }, function (data) {
+	console.log(data);
+})
 
-/// <summary>  
-/// 一个参数  
-/// </summary>  
-/// <param name="strQuery"></param>  
-/// <returns></returns>  
-[HttpGet]  
-public string Get(string strQuery)  
-{  
-    //一个参数的时候，如果前端是传过来的是字符串的json可以反序列化成对象。  
-    //TbCharging oData = Newtonsoft.Json.JsonConvert.DeserializeObject<TbCharging>(strQuery);  
-    //return String.Format("{0},{1},{2},{3}", oData.Id, oData.Name, oData.Des, oData.CreateTime.ToString("yyyy-MM-dd hh:mm:ss"));  
-    return "一个参数" + strQuery;  
-} 
+==============================================================================
 
----------------------------------------------------------------------- 
-
-3、多个参数
-//Get多个参数  
-var get_f3 = function() {  
-    $.ajax({  
-        type: "get",  
-        url: "/api/Demo",   
-        data: { Id: "1", Name: "Jim", CreateTime: "1988-09-11" },  
-        success: function(data, status) {  
-            if (status == "success") {  
-                $("#div_test").html(data);  
-            }  
-        }  
-    });  
-}  
-
-后台控制器方法
-
-/// <summary>  
-/// 多个参数  
-/// </summary>  
-/// <param name="Id"></param>  
-/// <param name="Name"></param>  
-/// <param name="CreateTime"></param>  
-/// <returns></returns>  
-[HttpGet]  
-public string Get(int Id, string Name, DateTime CreateTime)  
-{  
-    return String.Format("多个参数,{0},{1},{2}", Id, Name, CreateTime.ToString("yyyy-MM-dd hh:mm:ss"));  
-}  
-
----------------------------------------------------------------------- 
-
-4、一个实体对象参数
-//Get实体对象作为参数  
-var get_f4 = function() {  
-    $.ajax({  
-        type: "get",  
-        url: "/api/Demo/GetModel",  
-        data: { Id: "1", Name: "Jim", CreateTime: "1988-09-11" },  
-        success: function(data, status) {  
-            if (status == "success") {  
-                $("#div_test").html(data);  
-            }  
-        }  
-    });  
-} 
-
-后台控制器方法
-
-/// <summary>  
-/// 一个实体对象参数  
-/// </summary>  
-/// <param name="oData"></param>  
-/// <returns></returns>  
-[HttpGet]  
-[Route("GetModel")]  
-public string Get([FromUri]TbCharging oData)  
-{  
-    return String.Format("一个实体对象参数，{0},{1},{2},{3}", oData.Id, oData.Name, oData.Des, oData.CreateTime.ToString("yyyy-MM-dd hh:mm:ss"));   
-}  
-
-备注：在使用Get传递实体对象参数的时候要注意，因为Get方式的时候参数是写在url的，所以我们在后台用[FromBody]是拿不到实体参数的，需要写[FromUri]才行。
-
-================================================================================
-
-Post方式
-
-//Post一个参数
-var post_f1 = function() {
-	$.ajax({
-		type: "post",
-		url: "/api/Demo",
-		data: { "": "Jim" },
-		//data: "=Jim", //两种写法，其他写法获取不到值
-		success: function(data, status) {
-			if (status == "success") {
-				$("#div_test").html(data);
-			}
-		}
-	});
-}
-
-/// <summary>
-/// 一个参数
-/// </summary>
-/// <param name="name"></param>
-/// <returns></returns>
-public string Post([FromBody]string name)
+namespace TestWebApi.Controllers
 {
-	return "一个参数，" + name;
+    public class HomeController : ApiController
+    {
+        [HttpGet]
+        public HttpResponseMessage GetByParam(string id, int sex, string name)
+        {
+            var jsonStr = "{\"IsSuccess\":true,\"Data\":\"www.itdos.com\"}";
+            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(jsonStr + id + sex + name, Encoding.UTF8, "text/plain")   //"text/json"
+            };
+            return result;
+        }
+
+        [HttpGet]
+        public HttpResponseMessage GetByModel([FromUri]People p)
+        {
+            var jsonStr = "{\"IsSuccess\":true,\"Data\":\"www.itdos.com\"}";
+            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(jsonStr + p.id + p.sex + p.name, Encoding.UTF8, "text/plain")
+            };
+            return result;
+        }
+
+        [HttpPost]
+        public HttpResponseMessage PostModel([FromBody]People param)
+        {
+            var jsonStr = "{\"IsSuccess\":true,\"Data\":\"www.itdos.com\"}";
+            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(jsonStr + param.id + param.sex + param.name, Encoding.UTF8, "text/plain")
+            };
+            return result;
+        }
+
+        [HttpPost]
+        public HttpResponseMessage PostDynamic([FromBody]dynamic param)
+        {
+            var jsonStr = "{\"IsSuccess\":true,\"Data\":\"www.itdos.com\"}";
+            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(jsonStr + param.id + param.sex + param.name, Encoding.UTF8, "text/plain")
+            };
+            return result;
+        }
+
+
+
+        [HttpPost]
+        public HttpResponseMessage PostString([FromBody]string data)
+        {
+            var jsonStr = "{\"IsSuccess\":true,\"Data\":\"www.itdos.com\"}";
+            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(jsonStr + data, Encoding.UTF8, "text/plain")
+            };
+            return result;
+        }
+    }
+
+
+    public class People
+    {
+        public string id { get; set; }
+        public string name { get; set; }
+        public int sex { get; set; }
+
+
+    }
+
 }
-
-----------------------------------------------------------------------
-
-2、一个实体对象参数
-//Post一个对象（Post不能提交多个参数，只能将多个参数封装成一个对象）  
-var post_f2 = function () {  
-    var postdata = { Id: "1", Name: "Jim", CreateTime: "1988-09-11" };  
-    $.ajax({  
-        type: "post",  
-        url: "/api/Demo/PostAdd",//多个post的时候，路由会匹配不到，所以要自定义路由  
-        //data: { Id: "1", Name: "Jim", CreateTime: "1988-09-11" },  
-        data: postdata,  
-        success: function (data, status) {  
-            if (status == "success") {  
-                $("#div_test").html(data);  
-            }  
-        }  
-    });  
-}  
-
-
-/// <summary>  
-/// 一个对象  
-/// </summary>  
-/// <param name="oData"></param>  
-/// <returns></returns>  
-[HttpPost]  
-[Route("PostAdd")]  
-public object Post([FromBody]TbCharging oData)  
-{  
-    var strName = String.Format("一个对象，{0},{1}", oData.Id, oData.Name);  
-    return strName;  
-} 
-
-
-----------------------------------------------------------------------
-
-3、一个数组参数
-//Post数组作为参数  
-var post_f3 = function () {  
-    var arr = ["1", "2", "3", "4"];  
-    $.ajax({  
-        type: "post",  
-        url: "/api/Demo/PostArray",  
-        contentType: 'application/json',  
-        data: JSON.stringify(arr),  
-        success: function (data, status) {  
-            if (status == "success") {  
-                $("#div_test").html(data);  
-            }  
-        }  
-    });  
-}  
-
-这里我们说一下contentType和dataType。
-
-contentType
-
-发送信息至服务器时内容编码类型。假如你不写的话，默认值是: "application/x-www-form-urlencoded"。
-
-dataType
-
-预期服务器返回的数据类型。
-
-/// <summary>
-/// 数组作为参数
-/// </summary>
-/// <param name="ids"></param>
-/// <returns></returns>
-[HttpPost]
-[Route("PostArray")]
-public object Post(string[] ids)
-{
-	return String.Format("{0},{1},{2}", ids[0], ids[1], ids[2]);
-}
-
-
-----------------------------------------------------------------------
-
-4、实体集合参数
-//Post对象集合，多个相同对象(多个不同对象的时候可以将多个对象封装成一个扩展对象)  
-var post_f4 = function () {  
-    var arr = [  
-        { Id: "1", Name: "Jim", CreateTime: "1988-09-11" },  
-        { Id: "2", Name: "Lilei", CreateTime: "1990-12-11" },  
-        { Id: "3", Name: "Lucy", CreateTime: "1986-01-10" }  
-    ];  
-    $.ajax({  
-        type: "post",  
-        url: "/api/Demo/PostMulti",//多个post的时候，路由会匹配不到，所以要自定义路由    
-        contentType: 'application/json',  
-        data: JSON.stringify(arr),  
-        success: function (data, status) {  
-            if (status == "success") {  
-                $("#div_test").html(data);  
-            }  
-        }  
-    });  
-}  
-
-后台的控制器方法
-
-/// <summary>  
-/// 对象集合  
-/// </summary>  
-/// <param name="lstCharging"></param>  
-/// <returns></returns>  
-[HttpPost]  
-[Route("PostMulti")]  
-public object Post([FromBody]List<TbCharging> lstCharging)  
-{  
-    return String.Format("{0},{1}", lstCharging[0].Name, lstCharging[1].Name);  
-}  
-
