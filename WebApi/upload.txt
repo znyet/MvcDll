@@ -1,0 +1,80 @@
+/// <summary>
+/// 上传文件和参数
+/// </summary>
+/// <param name="query"></param>
+/// <returns></returns>
+[HttpPost]
+public async Task<HttpResponseMessage> PostFile([FromUri]string query)
+{
+
+	//if (!Request.Content.IsMimeMultipartContent())
+	//{
+	//    throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
+	//}
+
+	Console.WriteLine(query); //query参数
+
+	var provider = new MultipartMemoryStreamProvider();
+	await Request.Content.ReadAsMultipartAsync(provider);
+
+
+	foreach (var item in provider.Contents)
+	{
+		var stream = item.ReadAsStreamAsync().Result;
+
+		if (item.Headers.ContentDisposition.FileName == null) //post参数
+		{
+			Console.WriteLine(item.Headers.ContentDisposition.Name.Replace("\"","")); //post key
+			StreamReader sr = new StreamReader(stream);
+			Console.WriteLine(sr.ReadToEnd());
+		}
+		else //文件  
+		{
+			// 获取到流  
+
+			if (stream.Length > 0)
+			{
+				byte[] bytes = new byte[stream.Length];
+				stream.Read(bytes, 0, bytes.Length);
+				var name = item.Headers.ContentDisposition.FileName.Replace("\"", "");
+				string savePath = AppDomain.CurrentDomain.BaseDirectory + name;
+				File.WriteAllBytes(savePath, bytes);        
+			}
+
+		}
+
+	}
+
+	var result = new HttpResponseMessage(HttpStatusCode.OK)
+	{
+
+		Content = new StringContent("", Encoding.UTF8, "text/html")
+	};
+	return result;
+}
+
+/// <summary>
+/// 上传流数据
+/// </summary>
+/// <returns></returns>
+[HttpPost]
+public HttpResponseMessage PostStream()
+{
+	byte[] data = Request.Content.ReadAsByteArrayAsync().Result;
+
+	var result = new HttpResponseMessage(HttpStatusCode.OK)
+	{
+		Content = new StringContent(Encoding.UTF8.GetString(data), Encoding.UTF8, "text/html")
+	};
+	return result;
+}
+
+
+
+-------------RestSharp---------------
+
+var client = new RestClient("http://localhost:8123");
+var req = new RestRequest("/Home/PostStream", Method.POST);
+req.AddParameter("a", "你好", ParameterType.RequestBody);
+var res = client.Execute(req);
+Console.WriteLine(res.Content);
