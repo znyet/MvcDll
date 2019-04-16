@@ -152,7 +152,7 @@ public async Task<HttpResponseMessage> PostFile([FromUri]string query)
 	//    throw new HttpResponseException(HttpStatusCode.UnsupportedMediaType);
 	//}
 
-	Console.WriteLine(query); //query参数
+	Console.WriteLine(query);
 
 	var provider = new MultipartMemoryStreamProvider();
 	await Request.Content.ReadAsMultipartAsync(provider);
@@ -160,26 +160,19 @@ public async Task<HttpResponseMessage> PostFile([FromUri]string query)
 
 	foreach (var item in provider.Contents)
 	{
-		var stream = item.ReadAsStreamAsync().Result;
+		var bytes = item.ReadAsByteArrayAsync().Result;
 
 		if (item.Headers.ContentDisposition.FileName == null) //post参数
 		{
 			Console.WriteLine(item.Headers.ContentDisposition.Name.Replace("\"","")); //post key
-			StreamReader sr = new StreamReader(stream);
-			Console.WriteLine(sr.ReadToEnd());
+			Console.WriteLine(Encoding.UTF8.GetString(bytes));
 		}
 		else //文件  
 		{
-			// 获取到流  
-
-			if (stream.Length > 0)
-			{
-				byte[] bytes = new byte[stream.Length];
-				stream.Read(bytes, 0, bytes.Length);
-				var name = item.Headers.ContentDisposition.FileName.Replace("\"", "");
-				string savePath = AppDomain.CurrentDomain.BaseDirectory + name;
-				File.WriteAllBytes(savePath, bytes);        
-			}
+			// 获取到流
+			var name = item.Headers.ContentDisposition.FileName.Replace("\"", "");
+			string savePath = AppDomain.CurrentDomain.BaseDirectory + name;
+			File.WriteAllBytes(savePath, bytes);
 
 		}
 
@@ -216,5 +209,8 @@ public HttpResponseMessage PostStream()
 var client = new RestClient("http://localhost:8123");
 var req = new RestRequest("/Home/PostStream", Method.POST);
 req.AddParameter("a", "你好", ParameterType.RequestBody);
+req.AddQueryParameter("query", "这是query参数");
+req.AddParameter("post", "这是post参数");
+req.AddFile("file", "D:\\2.txt");
 var res = client.Execute(req);
 Console.WriteLine(res.Content);
