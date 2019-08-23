@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.IO;
 using System.Net;
@@ -107,30 +108,122 @@ namespace TestWebApi.Controllers
 
         protected HttpResponseMessage FileData(string path, string fileName = null)
         {
-            if (fileName == null)
-                fileName = Path.GetFileName(path);
-
-            var stream = new FileStream(path, FileMode.Open);
-            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            FileStream stream = null;
+            var result = new HttpResponseMessage(HttpStatusCode.OK);
+            try
             {
-                Content = new StreamContent(stream)
-            };
-            result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            result.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment") { FileName = fileName };
-            return result;
+                if (fileName == null)
+                    fileName = Path.GetFileName(path);
+
+                stream = new FileStream(path, FileMode.Open);
+                result = new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StreamContent(stream)
+                };
+                result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                result.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+                {
+                    FileName = fileName
+                };
+                return result;
+            }
+            catch (Exception ex)
+            {
+                if (stream != null)
+                    stream.Dispose();
+                result.Content = new StringContent(ex.Message, Encoding.UTF8, "text/plain");
+                return result;
+            }
+
+
         }
 
         protected HttpResponseMessage FileData(Stream stream, string fileName)
         {
-            var result = new HttpResponseMessage(HttpStatusCode.OK)
+            var result = new HttpResponseMessage(HttpStatusCode.OK);
+            try
             {
-                Content = new StreamContent(stream)
-            };
-            result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-            result.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment") { FileName = fileName };
-            return result;
+                result.Content = new StreamContent(stream);
+                result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                result.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+                {
+                    FileName = fileName
+                };
+                return result;
+            }
+            catch (Exception ex)
+            {
+                if (stream != null)
+                    stream.Dispose();
+                result.Content = new StringContent(ex.Message, Encoding.UTF8, "text/plain");
+                return result;
+            }
+
         }
 
+        protected HttpResponseMessage StaticData(string url)
+        {
+            var result = new HttpResponseMessage(HttpStatusCode.OK);
+            FileStream stream = null;
+            try
+            {
+                var ext = Path.GetExtension(url);
+                var path = AppDomain.CurrentDomain.BaseDirectory + url;
+
+                if (ext == ".html" || ext == ".htm")
+                {
+                    var html = File.ReadAllText(path);
+                    result.Content = new StringContent(html, Encoding.UTF8, "text/html");
+                    return result;
+                }
+
+                string mediaType;
+                switch (ext)
+                {
+                    case ".js":
+                        mediaType = "application/x-javascript";
+                        break;
+                    case ".css":
+                        mediaType = "text/css";
+                        break;
+                    case ".jpg":
+                        mediaType = "image/jpeg";
+                        break;
+                    case ".gif":
+                        mediaType = "image/gif";
+                        break;
+                    case ".png":
+                        mediaType = "image/png";
+                        break;
+                    case ".zip":
+                        mediaType = "application/zip";
+                        break;
+                    case ".rar":
+                        mediaType = "application/x-rar-compressed";
+                        break;
+                    default:
+                        mediaType = "application/octet-stream";
+                        break;
+                }
+
+                var fileName = Path.GetFileName(url);
+                stream = new FileStream(path, FileMode.Open);
+                result.Content = new StreamContent(stream);
+                result.Content.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
+                result.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment") { FileName = fileName };
+                return result;
+
+            }
+            catch (Exception ex)
+            {
+                if (stream != null)
+                    stream.Dispose();
+
+                result.Content = new StringContent(ex.Message, Encoding.UTF8, "text/plain");
+                return result;
+            }
+
+        }
 
         #endregion
 
