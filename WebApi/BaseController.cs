@@ -20,30 +20,15 @@ namespace TestWebApi.Controllers
 
         private byte[] _stream;
 
-        protected NameValueCollection RequestQuery()
+        private async Task RequestCommon()
         {
-            if (_queryString == null)
+            _files = new ConcurrentDictionary<string, byte[]>();
+            if (Request.Content.IsFormData())
             {
-                _queryString = new NameValueCollection();
-                var data = Request.GetQueryNameValuePairs();
-                foreach (var item in data)
-                {
-                    _queryString.Add(item.Key, item.Value);
-                }
+                _form = await Request.Content.ReadAsFormDataAsync();
             }
-            return _queryString;
-        }
-
-        protected async Task<NameValueCollection> RequestForm()
-        {
-            return _form ?? (_form = await Request.Content.ReadAsFormDataAsync());
-        }
-
-        protected async Task<ConcurrentDictionary<string, byte[]>> RequestFiles()
-        {
-            if (_files == null)
+            else if (Request.Content.IsMimeMultipartContent())
             {
-                _files = new ConcurrentDictionary<string, byte[]>();
                 _form = new NameValueCollection();
 
                 var provider = new MultipartMemoryStreamProvider();
@@ -68,8 +53,39 @@ namespace TestWebApi.Controllers
                     }
                 }
             }
-            return _files;
+            else
+            {
+                _form = new NameValueCollection();
+            }
+        }
 
+        protected NameValueCollection RequestQuery()
+        {
+            if (_queryString != null)
+                return _queryString;
+            _queryString = new NameValueCollection();
+            var data = Request.GetQueryNameValuePairs();
+            foreach (var item in data)
+            {
+                _queryString.Add(item.Key, item.Value);
+            }
+            return _queryString;
+        }
+
+        protected async Task<NameValueCollection> RequestForm()
+        {
+            if (_form != null)
+                return _form;
+            await RequestCommon();
+            return _form;
+        }
+
+        protected async Task<ConcurrentDictionary<string, byte[]>> RequestFiles()
+        {
+            if (_files != null)
+                return _files;
+            await RequestCommon();
+            return _files;
         }
 
         protected async Task<byte[]> RequestStream()
@@ -113,7 +129,7 @@ namespace TestWebApi.Controllers
             result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
             result.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment") { FileName = fileName };
             return result;
-        }  
+        }
 
 
         #endregion
