@@ -1,0 +1,54 @@
+public class PageLoadPerformanceAttribute : ActionFilterAttribute
+{
+      //这里使用log4net来打印出结果
+       private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
+      //创建字典来记录开始时间，key是访问的线程Id.
+       private readonly Dictionary<int, DateTime> timeMap = new Dictionary<int, DateTime>();
+
+      //创建字典来记录当前访问的页面Url.
+       private readonly Dictionary<int, string > urlMap = new Dictionary<int, string>();
+
+       public override void OnActionExecuting(ActionExecutingContext filterContext)
+       {
+           //过滤掉ChildAction, 因为ChildAction实际上不是一个单独的页面
+           if(filterContext.IsChildAction) return;
+           var currentThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+           try
+           {
+               timeMap.Add(currentThreadId, DateTime.Now);
+               urlMap.Add(currentThreadId, filterContext.HttpContext.Request.Url == null
+                   ? string.Empty  : filterContext.HttpContext.Request.Url.AbsoluteUri);
+           }
+           catch (Exception ex)
+           {
+               Log.Error(ex.ToString());
+           }
+       }
+
+       public override void OnResultExecuted(ResultExecutedContext filterContext)
+       {
+           var currentThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+           if (!timeMap.ContainsKey(currentThreadId)) return;
+           try
+           {
+                //计算出当前页面访问耗时
+               var costSeconds = (DateTime.Now - timeMapt[currentThreadId]).TotalSeconds;
+               //如果耗时超过2秒，就是用log4net打印出，具体是哪个页面访问超过了2秒，具体使用了多长时间。
+               if (costSeconds > 2)
+               {
+                   Log.Info(string.Format("Access the action more than 2 seconds. cost seconds {1}.  
+                                 URL: {0}", urlMap[currentThreadId], costSeconds));
+               }
+           }
+           catch (Exception ex)
+           {
+               Log.Error(ex.ToString());
+           }
+           finally
+           {
+               timeMap.Remove(currentThreadId);
+               urlMap.Remove(currentThreadId);
+           }
+       }
+}
