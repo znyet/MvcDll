@@ -11,19 +11,26 @@ using System.Web.Http;
 
 namespace TestWebApi.Controllers
 {
+    public class WebApiFile
+    {
+        public string FileName { get; set; }
+
+        public byte[] FileBytes { get; set; }
+    }
+
     public class BaseController : ApiController
     {
         private NameValueCollection _queryString;
 
         private NameValueCollection _form;
 
-        private ConcurrentDictionary<string, byte[]> _files;
+        private ConcurrentDictionary<string, WebApiFile> _files;
 
         private byte[] _stream;
 
         private async Task RequestCommon()
         {
-            _files = new ConcurrentDictionary<string, byte[]>();
+            _files = new ConcurrentDictionary<string, WebApiFile>();
             if (Request.Content.IsFormData())
             {
                 _form = await Request.Content.ReadAsFormDataAsync();
@@ -48,8 +55,14 @@ namespace TestWebApi.Controllers
                     {
                         if (bytes.Length != 0)
                         {
-                            var name = item.Headers.ContentDisposition.FileName.Replace("\"", ""); //文件名称
-                            _files.TryAdd(name, bytes);
+                            var name = item.Headers.ContentDisposition.Name.Replace("\"", ""); //参数名称
+                            var fileName = item.Headers.ContentDisposition.FileName.Replace("\"", ""); //文件名称
+                            var file = new WebApiFile()
+                            {
+                                FileName = fileName,
+                                FileBytes = bytes
+                            };
+                            _files.TryAdd(name, file);
                         }
                     }
                 }
@@ -81,7 +94,7 @@ namespace TestWebApi.Controllers
             return _form;
         }
 
-        protected async Task<ConcurrentDictionary<string, byte[]>> RequestFiles()
+        protected async Task<ConcurrentDictionary<string, WebApiFile>> RequestFiles()
         {
             if (_files != null)
                 return _files;
